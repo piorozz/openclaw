@@ -54,17 +54,22 @@ echo "Fetching $UPSTREAM_REMOTE tag $TAG..."
 git fetch "$UPSTREAM_REMOTE" tag "$TAG"
 
 UPDATE_BRANCH="update/release-$(date +%Y-%m-%d)"
+if git show-ref --quiet "refs/heads/$UPDATE_BRANCH"; then
+  echo "fatal: Branch '$UPDATE_BRANCH' already exists. Merge to main and delete it first:"
+  echo "  git checkout $DEFAULT_BRANCH && git merge $UPDATE_BRANCH && git branch -d $UPDATE_BRANCH"
+  exit 1
+fi
 echo "Creating branch '$UPDATE_BRANCH' and merging $TAG..."
 git checkout -b "$UPDATE_BRANCH"
 if ! git merge --no-ff "$TAG" -m "Merge upstream release $TAG into $UPDATE_BRANCH"; then
   echo ""
   echo "Merge had conflicts. Resolve them, then run:"
   echo "  git add . && git commit --no-edit"
-  echo "Then merge this branch into main:"
-  echo "  git checkout $DEFAULT_BRANCH && git merge $UPDATE_BRANCH"
+  echo "Then merge this branch into main and remove it:"
+  echo "  git checkout $DEFAULT_BRANCH && git merge $UPDATE_BRANCH && git branch -d $UPDATE_BRANCH"
   exit 1
 fi
 
 echo ""
-echo "Update branch '$UPDATE_BRANCH' is ready. To merge into $DEFAULT_BRANCH:"
-echo "  git checkout $DEFAULT_BRANCH && git merge $UPDATE_BRANCH"
+echo "Update branch '$UPDATE_BRANCH' is ready. To merge into $DEFAULT_BRANCH and remove it:"
+echo "  git checkout $DEFAULT_BRANCH && git merge $UPDATE_BRANCH && git branch -d $UPDATE_BRANCH"
