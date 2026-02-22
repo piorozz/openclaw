@@ -17,10 +17,10 @@ GIT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || {
 }
 cd "$GIT_ROOT"
 
-# Ensure upstream remote exists
-if ! git remote get-url "$UPSTREAM_REMOTE" &>/dev/null; then
-  echo "Adding remote '$UPSTREAM_REMOTE' -> $UPSTREAM_URL"
-  git remote add "$UPSTREAM_REMOTE" "$UPSTREAM_URL"
+# Require clean main: no merge/rebase in progress
+if [[ -f "$GIT_ROOT/.git/MERGE_HEAD" || -d "$GIT_ROOT/.git/rebase-merge" || -d "$GIT_ROOT/.git/rebase-apply" ]]; then
+  echo "fatal: Merge or rebase in progress. Finish or abort it first."
+  exit 1
 fi
 
 # Require clean working tree
@@ -34,6 +34,12 @@ CURRENT="$(git branch --show-current)"
 if [[ "$CURRENT" != "$DEFAULT_BRANCH" ]]; then
   echo "fatal: Current branch is '$CURRENT'. Please switch to '$DEFAULT_BRANCH' and run again."
   exit 1
+fi
+
+# Ensure upstream remote exists
+if ! git remote get-url "$UPSTREAM_REMOTE" &>/dev/null; then
+  echo "Adding remote '$UPSTREAM_REMOTE' -> $UPSTREAM_URL"
+  git remote add "$UPSTREAM_REMOTE" "$UPSTREAM_URL"
 fi
 
 # Get latest release tag from GitHub
